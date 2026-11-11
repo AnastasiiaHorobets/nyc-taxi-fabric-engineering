@@ -1,0 +1,73 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "Copy",
+        "typeProperties": {
+          "source": {
+            "type": "BinarySource",
+            "formatSettings": {
+              "type": "BinaryReadSettings"
+            },
+            "storeSettings": {
+              "type": "HttpReadSettings",
+              "requestMethod": "GET"
+            },
+            "datasetSettings": {
+              "type": "Binary",
+              "typeProperties": {
+                "location": {
+                  "type": "HttpServerLocation",
+                  "relativeUrl": "trip-data/yellow_tripdata_2025-01.parquet"
+                }
+              },
+              "externalReferences": {
+                "connection": "d1201db8-19b4-49c5-9d07-0aaaabfd50ec"
+              },
+              "annotations": []
+            }
+          },
+          "sink": {
+            "type": "BinarySink",
+            "storeSettings": {
+              "type": "LakehouseWriteSettings"
+            },
+            "datasetSettings": {
+              "type": "Binary",
+              "typeProperties": {
+                "location": {
+                  "type": "LakehouseLocation",
+                  "folderPath": "bronze/yellow_taxi",
+                  "fileName": "yellow_tripdata_2025-01.parquet"
+                }
+              },
+              "linkedService": {
+                "name": "lh_nyc_taxi",
+                "properties": {
+                  "type": "Lakehouse",
+                  "typeProperties": {
+                    "artifactId": "d287ed43-0d4a-a91b-4d0c-14837f2bb0a7",
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "rootFolder": "Files"
+                  },
+                  "annotations": []
+                }
+              },
+              "annotations": []
+            }
+          },
+          "enableStaging": false
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "copy_yellow_taxi_parquet",
+        "dependsOn": []
+      }
+    ]
+  }
+}
