@@ -30,7 +30,7 @@
           "sink": {
             "type": "BinarySink",
             "storeSettings": {
-              "type": "LakehouseWriteSettings"
+              "type": "AzureBlobStorageWriteSettings"
             },
             "datasetSettings": {
               "type": "Binary",
@@ -46,8 +46,8 @@
                 "properties": {
                   "type": "Lakehouse",
                   "typeProperties": {
-                    "artifactId": "d287ed43-0d4a-a91b-4d0c-14837f2bb0a7",
-                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "artifactId": "7f2bb0a7-1483-4d0c-a91b-0d4ad287ed43",
+                    "workspaceId": "d517c4eb-a231-41fc-88a3-8e5812b39506",
                     "rootFolder": "Files"
                   },
                   "annotations": []
@@ -66,6 +66,95 @@
           "secureOutput": false
         },
         "name": "copy_yellow_taxi_parquet",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
+      },
+      {
+        "type": "ForEach",
+        "typeProperties": {
+          "isSequential": true,
+          "items": {
+            "value": "@createArray(\n    '2025-03', \n    '2025-04')",
+            "type": "Expression"
+          },
+          "activities": [
+            {
+              "type": "Copy",
+              "typeProperties": {
+                "source": {
+                  "type": "BinarySource",
+                  "formatSettings": {
+                    "type": "BinaryReadSettings"
+                  },
+                  "storeSettings": {
+                    "type": "HttpReadSettings",
+                    "requestMethod": "GET"
+                  },
+                  "datasetSettings": {
+                    "type": "Binary",
+                    "typeProperties": {
+                      "location": {
+                        "type": "HttpServerLocation",
+                        "relativeUrl": {
+                          "value": "@concat('trip-data/yellow_tripdata_', item(), '.parquet')",
+                          "type": "Expression"
+                        }
+                      }
+                    },
+                    "externalReferences": {
+                      "connection": "d1201db8-19b4-49c5-9d07-0aaaabfd50ec"
+                    },
+                    "annotations": []
+                  }
+                },
+                "sink": {
+                  "type": "BinarySink",
+                  "storeSettings": {
+                    "type": "AzureBlobStorageWriteSettings"
+                  },
+                  "datasetSettings": {
+                    "type": "Binary",
+                    "typeProperties": {
+                      "location": {
+                        "type": "LakehouseLocation",
+                        "folderPath": "bronze/yellow_taxi",
+                        "fileName": {
+                          "value": "@concat('yellow_tripdata_', item(), '.parquet')",
+                          "type": "Expression"
+                        }
+                      }
+                    },
+                    "linkedService": {
+                      "name": "lh_nyc_taxi",
+                      "properties": {
+                        "type": "Lakehouse",
+                        "typeProperties": {
+                          "artifactId": "d287ed43-0d4a-a91b-4d0c-14837f2bb0a7",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000",
+                          "rootFolder": "Files"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "annotations": []
+                  }
+                },
+                "enableStaging": false
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "copy_yellow_taxi_parquet_copy1",
+              "dependsOn": []
+            }
+          ]
+        },
+        "name": "foreach_taxi_months",
         "dependsOn": []
       }
     ]

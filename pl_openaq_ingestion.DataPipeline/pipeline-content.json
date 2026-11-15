@@ -1,0 +1,61 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "WebActivity",
+        "typeProperties": {
+          "method": "GET",
+          "relativeUrl": "secrets/openaq-api-key?api-version=7.4",
+          "headers": {}
+        },
+        "externalReferences": {
+          "connection": "168249a6-06ab-4af4-9f4b-e39a8fd7d54d"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": true,
+          "secureOutput": true
+        },
+        "name": "web_get_openaq_secret",
+        "dependsOn": []
+      },
+      {
+        "type": "RefreshDataflow",
+        "typeProperties": {
+          "dataflowId": "0efaaa34-c0c0-9d61-406e-23682cda9766",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "notifyOption": "NoNotification",
+          "dataflowType": "DataflowFabric",
+          "parameters": {
+            "API_SECRET": {
+              "value": {
+                "value": "@activity('web_get_openaq_secret').output.value",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          },
+          "executeMashupQueriesOnly": true
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": true,
+          "secureOutput": true
+        },
+        "name": "run_openaq_dataflow",
+        "dependsOn": [
+          {
+            "activity": "web_get_openaq_secret",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

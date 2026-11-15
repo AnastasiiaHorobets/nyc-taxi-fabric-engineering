@@ -1,0 +1,66 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "df_openaq_ingestion",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "API_SECRET": {
+      "queryId": "e4749fff-43aa-4517-9fe7-736a7a2f263e",
+      "queryName": "API_SECRET",
+      "loadEnabled": false
+    },
+    "bronze_openaq_locations": {
+      "queryId": "60fa7332-3682-4887-a4ad-ebbc58ff7baf",
+      "queryName": "bronze_openaq_locations",
+      "loadEnabled": false
+    },
+    "debug_parameter_check": {
+      "queryId": "de102781-9d24-41b7-b2d8-b84915b0de60",
+      "queryName": "debug_parameter_check",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "31dd59bc-1a35-422c-a748-569d6f53f9dc",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    },
+    "openaq_measurements_DataDestination": {
+      "queryId": "65df0b56-3196-47d7-9929-5152a19ee453",
+      "queryName": "openaq_measurements_DataDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    },
+    "openaq_sensors": {
+      "queryId": "56ed3da4-b02f-4d4c-acf3-e31944c2ca1a",
+      "queryName": "openaq_sensors",
+      "loadEnabled": false
+    },
+    "openaq_sensor_coverage": {
+      "queryId": "471f9a97-86ed-4a07-b17d-4182c7ff7096",
+      "queryName": "openaq_sensor_coverage",
+      "loadEnabled": false
+    },
+    "openaq_daily_measurements": {
+      "queryId": "0d588795-e7a3-41d7-b970-a1a454db2506",
+      "queryName": "openaq_daily_measurements",
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "https://api.openaq.org/",
+      "kind": "Web",
+      "connectionId": "{\"ClusterId\":\"9fda268a-49c1-48a3-b247-fa0bb8e7e1db\",\"DatasourceId\":\"91828860-2fb8-4977-9b42-ef1507f813d8\"}"
+    },
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"9fda268a-49c1-48a3-b247-fa0bb8e7e1db\",\"DatasourceId\":\"61a0076c-d113-49d2-8bb4-c8fc3bee49ca\"}"
+    }
+  ],
+  "parametric": true
+}

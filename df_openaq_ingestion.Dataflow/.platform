@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Dataflow",
+    "displayName": "df_openaq_ingestion"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "0efaaa34-c0c0-9d61-406e-23682cda9766"
+  }
+}
