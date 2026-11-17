@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Dataflow",
+    "displayName": "df_ecb_ingestion"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "1f70bc7f-ef9e-86d0-4bce-67d79c306853"
+  }
+}

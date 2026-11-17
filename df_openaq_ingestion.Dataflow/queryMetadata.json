@@ -17,9 +17,9 @@
       "queryName": "bronze_openaq_locations",
       "loadEnabled": false
     },
-    "debug_parameter_check": {
-      "queryId": "de102781-9d24-41b7-b2d8-b84915b0de60",
-      "queryName": "debug_parameter_check",
+    "openaq_daily_measurements": {
+      "queryId": "0d588795-e7a3-41d7-b970-a1a454db2506",
+      "queryName": "openaq_daily_measurements",
       "loadEnabled": false
     },
     "DefaultDestination": {
@@ -28,25 +28,26 @@
       "isHidden": true,
       "loadEnabled": false
     },
-    "openaq_measurements_DataDestination": {
-      "queryId": "65df0b56-3196-47d7-9929-5152a19ee453",
-      "queryName": "openaq_measurements_DataDestination",
-      "isHidden": true,
-      "loadEnabled": false
-    },
     "openaq_sensors": {
       "queryId": "56ed3da4-b02f-4d4c-acf3-e31944c2ca1a",
       "queryName": "openaq_sensors",
       "loadEnabled": false
     },
-    "openaq_sensor_coverage": {
-      "queryId": "471f9a97-86ed-4a07-b17d-4182c7ff7096",
-      "queryName": "openaq_sensor_coverage",
+    "fnGetDailyMeasurements": {
+      "queryId": "770ced6b-1073-4dc8-affe-f57b7eec5d1f",
+      "queryName": "fnGetDailyMeasurements",
       "loadEnabled": false
     },
-    "openaq_daily_measurements": {
-      "queryId": "0d588795-e7a3-41d7-b970-a1a454db2506",
-      "queryName": "openaq_daily_measurements",
+    "bronze_openaq_locations_DataDestination": {
+      "queryId": "5fc3cf1b-87c5-438a-8b3d-4937ff9e6ff0",
+      "queryName": "bronze_openaq_locations_DataDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    },
+    "openaq_daily_measurements_DataDestination": {
+      "queryId": "4bb3e4fc-f55a-4b4b-919f-a2cb3ffbfe93",
+      "queryName": "openaq_daily_measurements_DataDestination",
+      "isHidden": true,
       "loadEnabled": false
     }
   },

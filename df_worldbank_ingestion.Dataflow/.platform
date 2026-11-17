@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Dataflow",
+    "displayName": "df_worldbank_ingestion"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "4f7e6575-86b1-8c7d-4bab-b69dacced53d"
+  }
+}
