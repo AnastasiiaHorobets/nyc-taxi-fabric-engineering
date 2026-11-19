@@ -22,16 +22,68 @@
 
 # CELL ********************
 
-# Bronze Layer — NYC Taxi Data Ingestion
+spark.sql("SHOW TABLES in dbo").show(truncate=False)
 
-## Objective
-Ingest raw NYC Taxi trip data into Microsoft Fabric Lakehouse.
+# METADATA ********************
 
-## Technology
-- Microsoft Fabric
-- Apache Spark (PySpark)
-- OneLake
-- Delta Lake
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# **Schema and how many rows**
+
+# CELL ********************
+
+bronze_tables = [
+    "bronze_openaq_locations",
+    "openaq_sensors",
+    "openaq_daily_measurements",
+    "bronze_worldbank_gdp",
+    "bronze_ecb_fx_rates",
+
+]
+
+for table in bronze_tables:
+    df = spark.table(f"dbo.{table}")
+
+    print(f"\nTable: {table}")
+    print(f"Rows: {df.count()}")
+    df.printSchema()
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+taxi_path = "Files/bronze/yellow_taxi"
+
+files = notebookutils.fs.ls(taxi_path)
+
+for file in files:
+    print(file.name)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+df_taxi = spark.read.parquet(
+    "Files/bronze/yellow_taxi/"
+)
+
+df_taxi.printSchema()
+print(f"Total columns: {len(df_taxi.columns)}")
 
 # METADATA ********************
 
