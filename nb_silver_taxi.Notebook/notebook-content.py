@@ -22,7 +22,7 @@
 
 # MARKDOWN ********************
 
-# # Silver Layer — Data Transformation
+# # Silver Layer - NYC Taxi Data Transformation
 
 # CELL ********************
 
@@ -78,27 +78,19 @@ quality_check = df_taxi.agg(
     F.count("*").alias("total_trips"),
 
     F.sum(
-        F.when(
-            F.col("trip_distance") <= 0, 1
-        ).otherwise(0)
+        F.when(F.col("trip_distance") <= 0, 1).otherwise(0)
     ).alias("invalid_distance"),
 
     F.sum(
-        F.when(
-            F.col("fare_amount") <= 0, 1
-        ).otherwise(0)
+        F.when(F.col("fare_amount") <= 0, 1).otherwise(0)
     ).alias("invalid_fare"),
 
     F.sum(
-        F.when(
-            F.col("tpep_pickup_datetime").isNull(), 1
-        ).otherwise(0)
+        F.when(F.col("tpep_pickup_datetime").isNull(), 1).otherwise(0)
     ).alias("null_pickup"),
 
     F.sum(
-        F.when(
-            F.col("tpep_dropoff_datetime").isNull(), 1
-        ).otherwise(0)
+        F.when(F.col("tpep_dropoff_datetime").isNull(), 1).otherwise(0)
     ).alias("null_dropoff"),
 
     F.sum(
@@ -224,18 +216,14 @@ df_taxi_silver = (
 df_taxi_silver = (
     df_taxi_silver
     .withColumn(
-        "trip_date",
-        F.to_date(F.col("pickup_datetime"))
+        "trip_date",F.to_date(F.col("pickup_datetime"))
     )
     .withColumn(
-        "pickup_hour",
-        F.hour(F.col("pickup_datetime"))
+        "pickup_hour", F.hour(F.col("pickup_datetime"))
     )
     .withColumn(
-        "trip_duration_minutes",
-        F.round(
-            F.expr(
-                "timestampdiff(SECOND, pickup_datetime, dropoff_datetime) / 60.0"
+        "trip_duration_minutes",F.round(F.expr(
+            "timestampdiff(SECOND, pickup_datetime, dropoff_datetime) / 60.0"
             ),
             2
         )
@@ -313,6 +301,3 @@ df_silver_check.agg(
 # - Output: dbo.silver_yellow_taxi_trips (Delta Table)
 # 
 # 7.57% of records were excluded through data cleaning and exact deduplication. The contribution of each operation was not measured separately.
-
-# MARKDOWN ********************
-
