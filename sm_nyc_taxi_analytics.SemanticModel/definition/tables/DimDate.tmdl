@@ -1,0 +1,51 @@
+table DimDate
+	lineageTag: 76f4fa19-2260-4198-a8c3-eff9383cb167
+	sourceLineageTag: [dbo].[DimDate]
+
+	column full_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 790eab6b-60e5-4acd-b6df-2737d1955066
+		sourceLineageTag: full_date
+		summarizeBy: none
+		sourceColumn: full_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column year
+		dataType: int64
+		formatString: 0
+		lineageTag: f2fb16df-26a3-4a39-bf6e-b2e3b803c17f
+		sourceLineageTag: year
+		summarizeBy: sum
+		sourceColumn: year
+
+		annotation SummarizationSetBy = Automatic
+
+	column month
+		dataType: int64
+		formatString: 0
+		lineageTag: daac3711-f50a-4257-8f25-e3b3fb878f0e
+		sourceLineageTag: month
+		summarizeBy: sum
+		sourceColumn: month
+
+		annotation SummarizationSetBy = Automatic
+
+	column day
+		dataType: int64
+		formatString: 0
+		lineageTag: 6575f290-0057-49a9-ab0f-050701a94d7f
+		sourceLineageTag: day
+		summarizeBy: sum
+		sourceColumn: day
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimDate = entity
+		mode: directLake
+		source
+			entityName: DimDate
+			schemaName: dbo
+			expressionSource: 'DirectLake - wh_nyc_taxi_analytics'
+

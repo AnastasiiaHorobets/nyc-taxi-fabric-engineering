@@ -9,7 +9,7 @@ shared ecb_fx_rates = let
                 RelativePath = "service/data/EXR/D.USD.EUR.SP00.A",
                 Query = [
                     format = "csvdata",
-                    startPeriod = "2025-01-01",
+                    startPeriod = "2024-12-30",
                     endPeriod = "2026-11-17"
                 ]
             ]

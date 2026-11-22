@@ -1,0 +1,12 @@
+relationship f3bace40-fc60-46c0-6425-029401510ec1
+	fromColumn: FactTaxiDaily.trip_date
+	toColumn: DimDate.full_date
+
+relationship e93211db-ee02-56aa-c6df-75b3e6e1a0cb
+	fromColumn: FactTaxiDaily.pickup_location_id
+	toColumn: DimZone.location_id
+
+relationship cb214a13-d92d-0d1c-5d86-fcafbed1d1e5
+	fromColumn: FactAirQualityDaily.measurement_date
+	toColumn: DimDate.full_date
+

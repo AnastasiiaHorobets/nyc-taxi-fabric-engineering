@@ -1,0 +1,120 @@
+table FactTaxiDaily
+	lineageTag: a3e9e946-6a5e-43b0-a310-1ce57d335df6
+	sourceLineageTag: [dbo].[FactTaxiDaily]
+
+	measure 'Average Fare USD' =
+			
+			DIVIDE(
+			    SUMX(
+			        FactTaxiDaily,
+			        FactTaxiDaily[avg_fare_usd] * FactTaxiDaily[total_trips]
+			    ),
+			    SUM(FactTaxiDaily[total_trips])
+			)
+		lineageTag: 39ad7697-ab73-4fb1-96ee-c5b1894e13e6
+
+		changedProperty = Name
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Revenue EUR' = ```
+			
+			SUMX(
+			    VALUES(DimDate[full_date]),
+			    VAR CurrentDate = DimDate[full_date]
+			    VAR Rate =
+			        MAXX(
+			            TOPN(
+			                1,
+			                FILTER(
+			                    ALL(DimFX),
+			                    DimFX[currency] = "USD"
+			                        && DimFX[fx_date] <= CurrentDate
+			                ),
+			                DimFX[fx_date], DESC
+			            ),
+			            DimFX[usd_per_eur]
+			        )
+			    VAR RevenueUSD =
+			        CALCULATE(SUM(FactTaxiDaily[total_revenue_usd]))
+			    RETURN
+			        DIVIDE(RevenueUSD, Rate)
+			)
+			
+			```
+		lineageTag: fef7dbd3-c6d3-458b-8963-4360ac97b8b7
+
+		changedProperty = Name
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column trip_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 2ecd9d0a-2c5e-414f-8bbe-4aac95b2165e
+		sourceLineageTag: trip_date
+		summarizeBy: none
+		sourceColumn: trip_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column pickup_location_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 07141f18-9fb2-48db-b499-39f06534f3b9
+		sourceLineageTag: pickup_location_id
+		summarizeBy: none
+		sourceColumn: pickup_location_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_trips
+		dataType: int64
+		formatString: 0
+		lineageTag: 7bf0494f-83bb-4395-a59c-e85b18b8c7d8
+		sourceLineageTag: total_trips
+		summarizeBy: sum
+		sourceColumn: total_trips
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_revenue_usd
+		dataType: double
+		lineageTag: 6a986f73-878b-45cc-b088-ea8a4b382e84
+		sourceLineageTag: total_revenue_usd
+		summarizeBy: sum
+		sourceColumn: total_revenue_usd
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column avg_fare_usd
+		dataType: double
+		lineageTag: e621ae79-bbbd-40fb-838f-3add56fa4f62
+		sourceLineageTag: avg_fare_usd
+		summarizeBy: sum
+		sourceColumn: avg_fare_usd
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column avg_trip_distance
+		dataType: double
+		lineageTag: 7548b870-1ab0-42d3-90fd-d62bc2893eb8
+		sourceLineageTag: avg_trip_distance
+		summarizeBy: sum
+		sourceColumn: avg_trip_distance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition FactTaxiDaily = entity
+		mode: directLake
+		source
+			entityName: FactTaxiDaily
+			schemaName: dbo
+			expressionSource: 'DirectLake - wh_nyc_taxi_analytics'
+

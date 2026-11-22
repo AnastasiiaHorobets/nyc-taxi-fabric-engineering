@@ -1,0 +1,41 @@
+table DimGDP
+	lineageTag: 84fb6e5a-33a0-4a39-b289-22fc84c7f8a3
+	sourceLineageTag: [dbo].[DimGDP]
+
+	column country_code
+		dataType: string
+		lineageTag: 16740c5e-640e-4f89-8c82-183206318a3f
+		sourceLineageTag: country_code
+		summarizeBy: none
+		sourceColumn: country_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column year
+		dataType: int64
+		formatString: 0
+		lineageTag: 5d2fbe38-0fc7-4628-ab6d-9af67141f0d9
+		sourceLineageTag: year
+		summarizeBy: sum
+		sourceColumn: year
+
+		annotation SummarizationSetBy = Automatic
+
+	column gdp_usd
+		dataType: double
+		lineageTag: b1b80f7c-4bad-4986-9aa6-71ecfdd3b086
+		sourceLineageTag: gdp_usd
+		summarizeBy: sum
+		sourceColumn: gdp_usd
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition DimGDP = entity
+		mode: directLake
+		source
+			entityName: DimGDP
+			schemaName: dbo
+			expressionSource: 'DirectLake - wh_nyc_taxi_analytics'
+

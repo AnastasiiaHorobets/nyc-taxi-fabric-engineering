@@ -1,0 +1,79 @@
+table FactAirQualityDaily
+	lineageTag: b90c5f15-b5f9-4b3d-9f2c-8524c0950394
+	sourceLineageTag: [dbo].[FactAirQualityDaily]
+
+	column measurement_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: e898a8d5-5926-4d19-afa3-08f06409169c
+		sourceLineageTag: measurement_date
+		summarizeBy: none
+		sourceColumn: measurement_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column location_id
+		dataType: int64
+		formatString: 0
+		lineageTag: b4355813-395e-4f53-b95f-537ddabae6a6
+		sourceLineageTag: location_id
+		summarizeBy: sum
+		sourceColumn: location_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column location_name
+		dataType: string
+		lineageTag: 839cdb25-eb7c-41b0-8a39-8db31d2e1845
+		sourceLineageTag: location_name
+		summarizeBy: none
+		sourceColumn: location_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column pollutant
+		dataType: string
+		lineageTag: ae0a70d0-0654-4c12-baa2-0ecbe70dc4e2
+		sourceLineageTag: pollutant
+		summarizeBy: none
+		sourceColumn: pollutant
+
+		annotation SummarizationSetBy = Automatic
+
+	column units
+		dataType: string
+		lineageTag: ff3eb923-b589-4e1a-93cb-ff8db13d1fa1
+		sourceLineageTag: units
+		summarizeBy: none
+		sourceColumn: units
+
+		annotation SummarizationSetBy = Automatic
+
+	column avg_pollution
+		dataType: double
+		lineageTag: 3c77d123-a43a-4053-bcf5-e362af3daeb0
+		sourceLineageTag: avg_pollution
+		summarizeBy: sum
+		sourceColumn: avg_pollution
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column measurement_count
+		dataType: int64
+		formatString: 0
+		lineageTag: a38c4147-3471-4ec5-9ee4-1403db95394b
+		sourceLineageTag: measurement_count
+		summarizeBy: sum
+		sourceColumn: measurement_count
+
+		annotation SummarizationSetBy = Automatic
+
+	partition FactAirQualityDaily = entity
+		mode: directLake
+		source
+			entityName: FactAirQualityDaily
+			schemaName: dbo
+			expressionSource: 'DirectLake - wh_nyc_taxi_analytics'
+

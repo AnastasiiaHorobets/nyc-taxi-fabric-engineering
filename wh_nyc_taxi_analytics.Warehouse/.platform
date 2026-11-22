@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Warehouse",
+    "displayName": "wh_nyc_taxi_analytics",
+    "description": ""
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "fcf08323-7d16-ad8a-414a-213e327690e9"
+  }
+}

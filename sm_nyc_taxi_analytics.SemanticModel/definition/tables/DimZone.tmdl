@@ -1,0 +1,48 @@
+table DimZone
+	lineageTag: 5c4f91cd-3cfa-41eb-91ff-f5d3a189a694
+	sourceLineageTag: [dbo].[DimZone]
+
+	column location_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 45d4f27d-a762-445a-9c19-3793eca505fe
+		sourceLineageTag: location_id
+		summarizeBy: none
+		sourceColumn: location_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column borough
+		dataType: string
+		lineageTag: d20e0f19-bc94-427b-8196-ca2d3e6194f1
+		sourceLineageTag: borough
+		summarizeBy: none
+		sourceColumn: borough
+
+		annotation SummarizationSetBy = Automatic
+
+	column zone_name
+		dataType: string
+		lineageTag: f9f2cfb9-b9ae-495b-a3a9-22e26c0f77fd
+		sourceLineageTag: zone_name
+		summarizeBy: none
+		sourceColumn: zone_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column service_zone
+		dataType: string
+		lineageTag: 5c230fde-2dcb-482d-a8e3-4b7a2821066a
+		sourceLineageTag: service_zone
+		summarizeBy: none
+		sourceColumn: service_zone
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimZone = entity
+		mode: directLake
+		source
+			entityName: DimZone
+			schemaName: dbo
+			expressionSource: 'DirectLake - wh_nyc_taxi_analytics'
+

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "ca10ec89a07d37ca17d3",
+  "displayName": "Economic Impact",
+  "displayOption": "FitToPage",
+  "height": 1080,
+  "width": 1920
+}
