@@ -114,7 +114,7 @@ df_fx_clean = (
 
 # ECB FX - Data Quality Checks & Currency Validation
 
-df_fx.agg(
+df_fx_clean.agg(
     F.count("*").alias("total_records"),
     F.count(F.when(F.col("date").isNull(), 1)).alias("null_dates"),
     F.count(F.when(F.col("usd_per_eur").isNull(), 1)).alias("null_fx_rates"),
@@ -139,7 +139,7 @@ df_fx.agg(
 # CELL ********************
 
 (
-    df_fx.write
+    df_fx_clean.write
     .format("delta")
     .mode("overwrite")
     .saveAsTable("dbo.silver_ecb_fx_rates")

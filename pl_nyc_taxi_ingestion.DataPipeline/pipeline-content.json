@@ -18,7 +18,10 @@
               "typeProperties": {
                 "location": {
                   "type": "HttpServerLocation",
-                  "relativeUrl": "trip-data/yellow_tripdata_2025-01.parquet"
+                  "relativeUrl": {
+                    "value": "@concat('trip-data/yellow_tripdata_', pipeline().parameters.p_taxi_month, '.parquet')",
+                    "type": "Expression"
+                  }
                 }
               },
               "externalReferences": {
@@ -38,7 +41,7 @@
                 "location": {
                   "type": "LakehouseLocation",
                   "folderPath": "bronze/yellow_taxi",
-                  "fileName": "yellow_tripdata_2025-01.parquet"
+                  "fileName": " @concat('yellow_tripdata_', pipeline().parameters.p_taxi_month, '.parquet')"
                 }
               },
               "linkedService": {
@@ -130,8 +133,8 @@
                       "properties": {
                         "type": "Lakehouse",
                         "typeProperties": {
-                          "artifactId": "d287ed43-0d4a-a91b-4d0c-14837f2bb0a7",
-                          "workspaceId": "00000000-0000-0000-0000-000000000000",
+                          "artifactId": "7f2bb0a7-1483-4d0c-a91b-0d4ad287ed43",
+                          "workspaceId": "d517c4eb-a231-41fc-88a3-8e5812b39506",
                           "rootFolder": "Files"
                         },
                         "annotations": []
@@ -155,8 +158,215 @@
           ]
         },
         "name": "foreach_taxi_months",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
         "dependsOn": []
+      },
+      {
+        "type": "GetMetadata",
+        "typeProperties": {
+          "datasetSettings": {
+            "type": "Binary",
+            "typeProperties": {
+              "location": {
+                "type": "LakehouseLocation",
+                "folderPath": "bronze/yellow_taxi",
+                "fileName": {
+                  "value": "@concat('yellow_tripdata_', variables('v_taxi_month'), '.parquet')",
+                  "type": "Expression"
+                }
+              }
+            },
+            "connectionSettings": {
+              "name": "lh_nyc_taxi",
+              "properties": {
+                "type": "Lakehouse",
+                "typeProperties": {
+                  "artifactId": "d287ed43-0d4a-a91b-4d0c-14837f2bb0a7",
+                  "workspaceId": "00000000-0000-0000-0000-000000000000",
+                  "rootFolder": "Files"
+                },
+                "externalReferences": {
+                  "connection": "61a0076c-d113-49d2-8bb4-c8fc3bee49ca"
+                },
+                "annotations": []
+              }
+            },
+            "annotations": []
+          },
+          "fieldList": [
+            "exists"
+          ],
+          "storeSettings": {
+            "type": "AzureBlobStorageReadSettings",
+            "recursive": true,
+            "enablePartitionDiscovery": false
+          },
+          "formatSettings": {
+            "type": "BinaryReadSettings"
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "check_taxi_file_in_bronze",
+        "dependsOn": [
+          {
+            "activity": "set_taxi_month",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "IfCondition",
+        "typeProperties": {
+          "expression": {
+            "value": "@equals(activity('check_taxi_file_in_bronze').output.exists, false)",
+            "type": "Expression"
+          },
+          "ifTrueActivities": [
+            {
+              "type": "Copy",
+              "typeProperties": {
+                "source": {
+                  "type": "BinarySource",
+                  "formatSettings": {
+                    "type": "BinaryReadSettings"
+                  },
+                  "storeSettings": {
+                    "type": "HttpReadSettings",
+                    "requestMethod": "GET"
+                  },
+                  "datasetSettings": {
+                    "type": "Binary",
+                    "typeProperties": {
+                      "location": {
+                        "type": "HttpServerLocation",
+                        "relativeUrl": {
+                          "value": "@concat('trip-data/yellow_tripdata_', variables('v_taxi_month'), '.parquet')",
+                          "type": "Expression"
+                        }
+                      }
+                    },
+                    "externalReferences": {
+                      "connection": "d1201db8-19b4-49c5-9d07-0aaaabfd50ec"
+                    },
+                    "annotations": []
+                  }
+                },
+                "sink": {
+                  "type": "BinarySink",
+                  "storeSettings": {
+                    "type": "AzureBlobStorageWriteSettings"
+                  },
+                  "datasetSettings": {
+                    "type": "Binary",
+                    "typeProperties": {
+                      "location": {
+                        "type": "LakehouseLocation",
+                        "folderPath": "bronze/yellow_taxi",
+                        "fileName": {
+                          "value": "@concat('yellow_tripdata_', variables('v_taxi_month'), '.parquet')",
+                          "type": "Expression"
+                        }
+                      }
+                    },
+                    "linkedService": {
+                      "name": "lh_nyc_taxi",
+                      "properties": {
+                        "type": "Lakehouse",
+                        "typeProperties": {
+                          "artifactId": "d287ed43-0d4a-a91b-4d0c-14837f2bb0a7",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000",
+                          "rootFolder": "Files"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "annotations": []
+                  }
+                },
+                "enableStaging": false
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "copy_yellow_taxi_parquet_copy2",
+              "dependsOn": []
+            }
+          ],
+          "ifFalseActivities": []
+        },
+        "name": "if_taxi_file_not_exists",
+        "dependsOn": [
+          {
+            "activity": "check_taxi_file_in_bronze",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SetVariable",
+        "typeProperties": {
+          "variableName": "v_taxi_month",
+          "value": {
+            "value": "@formatDateTime(addToTime(utcNow(), -2, 'Month'), 'yyyy-MM')",
+            "type": "Expression"
+          }
+        },
+        "policy": {
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "set_taxi_month",
+        "dependsOn": []
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "f6fb1621-fb4a-987a-408d-bb5d5091a7bf",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "run_silver_taxi",
+        "dependsOn": [
+          {
+            "activity": "if_taxi_file_not_exists",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
       }
-    ]
+    ],
+    "parameters": {
+      "p_taxi_month": {
+        "type": "string",
+        "defaultValue": "2026-09"
+      }
+    },
+    "variables": {
+      "v_taxi_month": {
+        "type": "String"
+      }
+    }
   }
 }

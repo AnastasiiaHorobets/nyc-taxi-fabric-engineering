@@ -1,0 +1,165 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "InvokePipeline",
+        "typeProperties": {
+          "parameters": {
+            "p_taxi_month": {
+              "value": "@formatDateTime(addToTime(utcNow(), -2, 'Month'), 'yyyy-MM')",
+              "type": "Expression"
+            }
+          },
+          "waitOnCompletion": true,
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "pipelineId": "d0b41e7c-a955-a27d-4524-934ce3df7734",
+          "operationType": "InvokeFabricPipeline"
+        },
+        "externalReferences": {
+          "connection": "aef5236f-6cdd-4158-88a6-bd5dcd9e12e5"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "invoke_nyc_taxi",
+        "dependsOn": []
+      },
+      {
+        "type": "InvokePipeline",
+        "typeProperties": {
+          "parameters": {},
+          "waitOnCompletion": true,
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "pipelineId": "c97e4783-a3cc-b717-4a94-c773397d999f",
+          "operationType": "InvokeFabricPipeline"
+        },
+        "externalReferences": {
+          "connection": "aef5236f-6cdd-4158-88a6-bd5dcd9e12e5"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "invoke_openaq",
+        "dependsOn": []
+      },
+      {
+        "type": "RefreshDataflow",
+        "typeProperties": {
+          "dataflowId": "4f7e6575-86b1-8c7d-4bab-b69dacced53d",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "notifyOption": "NoNotification",
+          "dataflowType": "DataflowFabric",
+          "executeMashupQueriesOnly": true
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "run_worldbank_dataflow",
+        "dependsOn": []
+      },
+      {
+        "type": "RefreshDataflow",
+        "typeProperties": {
+          "dataflowId": "1f70bc7f-ef9e-86d0-4bce-67d79c306853",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "notifyOption": "NoNotification",
+          "dataflowType": "DataflowFabric",
+          "executeMashupQueriesOnly": true
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "run_ecb_dataflow",
+        "dependsOn": []
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "e4d0f95b-2dbc-a4ee-42aa-1fc300876bd6",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "run_silver_economic",
+        "dependsOn": [
+          {
+            "activity": "run_worldbank_dataflow",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
+          {
+            "activity": "run_ecb_dataflow",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "\n-- GOLD ECONOMIC REFRESH\n-- Source: Silver Lakehouse\n-- Target: Gold Warehouse\n\nSET NOCOUNT ON;\n\n-- Check duplicate keys in Silver\nIF EXISTS (\n    SELECT 1\n    FROM lh_nyc_taxi.dbo.silver_worldbank_gdp\n    GROUP BY country_code, year\n    HAVING COUNT(*) > 1\n)\n    THROW 50001, 'Duplicate GDP source keys', 1;\n\nIF EXISTS (\n    SELECT 1\n    FROM lh_nyc_taxi.dbo.silver_ecb_fx_rates\n    GROUP BY date, currency\n    HAVING COUNT(*) > 1\n)\n    THROW 50002, 'Duplicate FX source keys', 1;\n\n-- Check duplicate keys in Gold\nIF EXISTS (\n    SELECT 1\n    FROM dbo.DimGDP\n    GROUP BY country_code, year\n    HAVING COUNT(*) > 1\n)\n    THROW 50003, 'Duplicate GDP target keys', 1;\n\nIF EXISTS (\n    SELECT 1\n    FROM dbo.DimFX\n    GROUP BY fx_date, currency\n    HAVING COUNT(*) > 1\n)\n    THROW 50004, 'Duplicate FX target keys', 1;\n\n-- Refresh DimGDP\nMERGE dbo.DimGDP AS target\nUSING (\n    SELECT\n        country_code,\n        year,\n        gdp_usd\n    FROM lh_nyc_taxi.dbo.silver_worldbank_gdp\n    WHERE country_code IS NOT NULL\n      AND year IS NOT NULL\n) AS source\nON target.country_code = source.country_code\nAND target.year = source.year\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.gdp_usd = source.gdp_usd\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (country_code, year, gdp_usd)\n    VALUES (source.country_code, source.year, source.gdp_usd);\n\n-- Refresh DimFX\nMERGE dbo.DimFX AS target\nUSING (\n    SELECT\n        date AS fx_date,\n        currency,\n        usd_per_eur\n    FROM lh_nyc_taxi.dbo.silver_ecb_fx_rates\n    WHERE date IS NOT NULL\n      AND currency IS NOT NULL\n) AS source\nON target.fx_date = source.fx_date\nAND target.currency = source.currency\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.usd_per_eur = source.usd_per_eur\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (fx_date, currency, usd_per_eur)\n    VALUES (source.fx_date, source.currency, source.usd_per_eur);",
+                "type": "Expression"
+              },
+              "type": "NonQuery"
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "wh_nyc_taxi_analytics",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "fcf08323-7d16-ad8a-414a-213e327690e9",
+              "endpoint": "shzyukrzx2suldqbd776rz2jha-5pcbpvjrul6edcfdrzmbfm4vay.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "refresh_gold_economic",
+        "dependsOn": [
+          {
+            "activity": "run_silver_economic",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -2,51 +2,32 @@
   "properties": {
     "activities": [
       {
-        "name": "web_get_openaq_secret",
         "type": "WebActivity",
-        "dependsOn": [],
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureOutput": true,
-          "secureInput": true
-        },
         "typeProperties": {
           "method": "GET",
-          "headers": {},
-          "relativeUrl": "secrets/openaq-api-key?api-version=7.4"
+          "relativeUrl": "secrets/openaq-api-key?api-version=7.4",
+          "headers": {}
         },
         "externalReferences": {
           "connection": "168249a6-06ab-4af4-9f4b-e39a8fd7d54d"
-        }
-      },
-      {
-        "name": "run_openaq_dataflow",
-        "type": "RefreshDataflow",
-        "state": "Inactive",
-        "onInactiveMarkAs": "Succeeded",
-        "dependsOn": [
-          {
-            "activity": "web_get_openaq_secret",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ],
+        },
         "policy": {
           "timeout": "0.12:00:00",
           "retry": 0,
           "retryIntervalInSeconds": 30,
-          "secureOutput": true,
-          "secureInput": true
+          "secureInput": true,
+          "secureOutput": true
         },
+        "name": "web_get_openaq_secret",
+        "dependsOn": []
+      },
+      {
+        "type": "RefreshDataflow",
         "typeProperties": {
-          "dataflowId": "2cda9766-2368-406e-9d61-c0c00efaaa34",
-          "workspaceId": "d517c4eb-a231-41fc-88a3-8e5812b39506",
+          "dataflowId": "0efaaa34-c0c0-9d61-406e-23682cda9766",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
           "notifyOption": "NoNotification",
           "dataflowType": "DataflowFabric",
-          "executeMashupQueriesOnly": true,
           "parameters": {
             "API_SECRET": {
               "value": {
@@ -55,8 +36,91 @@
               },
               "type": "String"
             }
+          },
+          "executeMashupQueriesOnly": true
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": true,
+          "secureOutput": true
+        },
+        "name": "run_openaq_dataflow",
+        "dependsOn": [
+          {
+            "activity": "web_get_openaq_secret",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
           }
-        }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "40589ab3-8a8b-90ef-487e-b79527974c97",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "run_silver_openaq",
+        "dependsOn": [
+          {
+            "activity": "run_openaq_dataflow",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "EXEC dbo.sp_refresh_fact_air_quality;",
+                "type": "Expression"
+              },
+              "type": "NonQuery"
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "wh_nyc_taxi_analytics",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "fcf08323-7d16-ad8a-414a-213e327690e9",
+              "endpoint": "shzyukrzx2suldqbd776rz2jha-5pcbpvjrul6edcfdrzmbfm4vay.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "refresh_gold_air_quality",
+        "dependsOn": [
+          {
+            "activity": "run_silver_openaq",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
       }
     ]
   }

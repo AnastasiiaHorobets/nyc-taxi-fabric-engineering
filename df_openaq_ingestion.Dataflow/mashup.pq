@@ -5,6 +5,7 @@ shared API_SECRET = "PLACEHOLDER" meta [IsParameterQuery = true, IsParameterQuer
 [DataDestinations = {[Definition = [Kind = "Reference", QueryName = "bronze_openaq_locations_DataDestination", IsNewTarget = true], Settings = [Kind = "Automatic", TypeSettings = [Kind = "Table"]]]}]
 shared bronze_openaq_locations = let
     BaseUrl = "https://api.openaq.org",
+    PageSize = 100,
 
     EmptyTable = #table(
         type table [
@@ -16,6 +17,28 @@ shared bronze_openaq_locations = let
         {}
     ),
 
+    GetPage = (PageNumber as number) as list =>
+        let
+            Response = Web.Contents(
+                BaseUrl,
+                [
+                    RelativePath = "v3/locations",
+                    Query = [
+                        coordinates = "40.7128,-74.0060",
+                        radius = "25000",
+                        limit = Text.From(PageSize),
+                        page = Text.From(PageNumber)
+                    ],
+                    Headers = [
+                        #"X-API-Key" = API_SECRET
+                    ]
+                ]
+            ),
+            JsonResponse = Json.Document(Response),
+            Results = JsonResponse[results]
+        in
+            Results,
+
     LocationsTable =
         if API_SECRET = null
             or API_SECRET = ""
@@ -24,27 +47,23 @@ shared bronze_openaq_locations = let
             EmptyTable
         else
             let
-                Response = Web.Contents(
-                    BaseUrl,
-                    [
-                        RelativePath = "v3/locations",
-                        Query = [
-                            coordinates = "40.7128,-74.0060",
-                            radius = "25000",
-                            limit = "100",
-                            page = "1"
-                        ],
-                        Headers = [
-                            #"X-API-Key" = API_SECRET
-                        ]
-                    ]
+                Pages = List.Generate(
+                    () => [
+                        Page = 1,
+                        Data = GetPage(1)
+                    ],
+                    each List.Count([Data]) > 0,
+                    each [
+                        Page = [Page] + 1,
+                        Data = GetPage([Page] + 1)
+                    ],
+                    each [Data]
                 ),
 
-                JsonResponse = Json.Document(Response),
-                Results = JsonResponse[results],
+                AllResults = List.Combine(Pages),
 
                 Rows = List.Transform(
-                    Results,
+                    AllResults,
                     each {
                         _[id],
                         _[name],
@@ -58,12 +77,17 @@ shared bronze_openaq_locations = let
                 Data = #table(
                     Value.Type(EmptyTable),
                     Rows
+                ),
+
+                UniqueLocations = Table.Distinct(
+                    Data,
+                    {"id"}
                 )
             in
-                Data
+                UniqueLocations
 in
     LocationsTable;
-[DataDestinations = {[Definition = [Kind = "Reference", QueryName = "openaq_daily_measurements_DataDestination", IsNewTarget = false], Settings = [Kind = "Manual", AllowCreation = false, ColumnSettings = [Mappings = {[SourceColumnName = "sensor_id", DestinationColumnName = "sensor_id"], [SourceColumnName = "pollutant", DestinationColumnName = "pollutant"], [SourceColumnName = "units", DestinationColumnName = "units"], [SourceColumnName = "date_from", DestinationColumnName = "date_from"], [SourceColumnName = "date_to", DestinationColumnName = "date_to"], [SourceColumnName = "value", DestinationColumnName = "value"]}], DynamicSchema = false, UpdateMethod = [Kind = "Append"], TypeSettings = [Kind = "Table"]]]}]
+[DataDestinations = {[Definition = [Kind = "Reference", QueryName = "openaq_daily_measurements_DataDestination", IsNewTarget = false], Settings = [Kind = "Manual", AllowCreation = false, ColumnSettings = [Mappings = {[SourceColumnName = "sensor_id", DestinationColumnName = "sensor_id"], [SourceColumnName = "pollutant", DestinationColumnName = "pollutant"], [SourceColumnName = "units", DestinationColumnName = "units"], [SourceColumnName = "date_from", DestinationColumnName = "date_from"], [SourceColumnName = "date_to", DestinationColumnName = "date_to"], [SourceColumnName = "value", DestinationColumnName = "value"]}], DynamicSchema = false, UpdateMethod = [Kind = "Replace"], TypeSettings = [Kind = "Table"]]]}]
 shared openaq_daily_measurements = let
     Sensors = Table.Buffer(
         Table.Distinct(
@@ -82,8 +106,14 @@ shared openaq_daily_measurements = let
         )
     ),
 
-    StartDate = #date(2026, 1, 2),
-    EndDate = #date(2026, 11, 18),
+    // Keep historical start date
+    StartDate = #date(2025, 1, 1),
+
+    // Automatically use yesterday (UTC)
+    EndDate = Date.AddDays(
+        Date.From(DateTimeZone.FixedUtcNow()),
+        -1
+    ),
 
     EmptyTable = #table(
         type table [
@@ -115,13 +145,24 @@ shared openaq_daily_measurements = let
                     )
                 ),
 
-                Combined = Table.Combine(
-                    AddMeasurements[measurements]
-                ),
+                MeasurementTables =
+                    AddMeasurements[measurements],
+
+                Combined =
+                    if List.IsEmpty(MeasurementTables)
+                    then EmptyTable
+                    else Table.Combine(
+                        MeasurementTables
+                    ),
 
                 RemoveDuplicates = Table.Distinct(
                     Combined,
-                    {"sensor_id", "date_from"}
+                    {
+                        "sensor_id",
+                        "pollutant",
+                        "date_from",
+                        "date_to"
+                    }
                 )
             in
                 RemoveDuplicates
@@ -137,6 +178,7 @@ in
 [BindToDefaultDestination = true]
 shared openaq_sensors = let
     BaseUrl = "https://api.openaq.org",
+    PageSize = 100,
 
     EmptyTable = #table(
         type table [
@@ -149,6 +191,31 @@ shared openaq_sensors = let
         {}
     ),
 
+    GetPage = (PageNumber as number) as list =>
+        let
+            Response = Web.Contents(
+                BaseUrl,
+                [
+                    RelativePath = "v3/locations",
+                    Query = [
+                        coordinates = "40.7128,-74.0060",
+                        radius = "25000",
+                        limit = Text.From(PageSize),
+                        page = Text.From(PageNumber),
+                        order_by = "id",
+                        sort_order = "asc"
+                    ],
+                    Headers = [
+                        #"X-API-Key" = API_SECRET
+                    ]
+                ]
+            ),
+
+            JsonResponse = Json.Document(Response),
+            Results = JsonResponse[results]
+        in
+            Results,
+
     SensorsTable =
         if API_SECRET = null
             or API_SECRET = ""
@@ -157,37 +224,37 @@ shared openaq_sensors = let
             EmptyTable
         else
             let
-                Response = Web.Contents(
-                    BaseUrl,
-                    [
-                        RelativePath = "v3/locations",
-                        Query = [
-                            coordinates = "40.7128,-74.0060",
-                            radius = "25000",
-                            limit = "100",
-                            page = "1"
-                        ],
-                        Headers = [
-                            #"X-API-Key" = API_SECRET
-                        ]
-                    ]
+                Pages = List.Generate(
+                    () => [
+                        Page = 1,
+                        Data = GetPage(1)
+                    ],
+                    each List.Count([Data]) > 0,
+                    each [
+                        Page = [Page] + 1,
+                        Data = GetPage([Page] + 1)
+                    ],
+                    each [Data]
                 ),
 
-                JsonResponse = Json.Document(Response),
-                Locations = JsonResponse[results],
+                Locations = List.Combine(Pages),
 
                 SensorRecords = List.Combine(
                     List.Transform(
                         Locations,
                         (loc) =>
                             List.Transform(
-                                loc[sensors],
+                                try loc[sensors] otherwise {},
                                 (sensor) => [
                                     location_id = loc[id],
                                     location_name = loc[name],
                                     sensor_id = sensor[id],
-                                    pollutant = sensor[parameter][name],
-                                    units = sensor[parameter][units]
+                                    pollutant =
+                                        try sensor[parameter][name]
+                                        otherwise null,
+                                    units =
+                                        try sensor[parameter][units]
+                                        otherwise null
                                 ]
                             )
                     )
@@ -197,9 +264,14 @@ shared openaq_sensors = let
                     SensorRecords,
                     Value.Type(EmptyTable),
                     MissingField.UseNull
+                ),
+
+                UniqueSensors = Table.Distinct(
+                    Data,
+                    {"location_id", "sensor_id"}
                 )
             in
-                Data
+                UniqueSensors
 in
     SensorsTable;
 [BindToDefaultDestination = true]
@@ -295,7 +367,7 @@ shared bronze_openaq_locations_DataDestination = let
 in
   TableNavigation;
 shared openaq_daily_measurements_DataDestination = let
-  Pattern = Lakehouse.Contents([CreateNavigationProperties = false, EnableFolding = false, HierarchicalNavigation = true]),
+  Pattern = Lakehouse.Contents([HierarchicalNavigation = true, EnableVorder = true, OutputMetadataRefresh = true, CreateNavigationProperties = false, EnableFolding = false]),
   Navigation_1 = Pattern{[workspaceId = "d517c4eb-a231-41fc-88a3-8e5812b39506"]}[Data],
   Navigation_2 = Navigation_1{[lakehouseId = "7f2bb0a7-1483-4d0c-a91b-0d4ad287ed43"]}[Data],
   Navigation_3 = Navigation_2{[Id = "dbo", ItemKind = "Schema"]}[Data],
