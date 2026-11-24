@@ -322,7 +322,7 @@
         "typeProperties": {
           "variableName": "v_taxi_month",
           "value": {
-            "value": "@formatDateTime(addToTime(utcNow(), -2, 'Month'), 'yyyy-MM')",
+            "value": "@if(\n    empty(pipeline().parameters.p_taxi_month),\n    formatDateTime(addToTime(utcNow(), -2, 'Month'), 'yyyy-MM'),\n    pipeline().parameters.p_taxi_month\n)",
             "type": "Expression"
           }
         },
@@ -359,8 +359,7 @@
     ],
     "parameters": {
       "p_taxi_month": {
-        "type": "string",
-        "defaultValue": "2026-09"
+        "type": "string"
       }
     },
     "variables": {

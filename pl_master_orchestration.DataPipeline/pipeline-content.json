@@ -48,7 +48,14 @@
           "secureOutput": false
         },
         "name": "invoke_openaq",
-        "dependsOn": []
+        "dependsOn": [
+          {
+            "activity": "refresh_gold_taxi",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
       },
       {
         "type": "RefreshDataflow",
@@ -67,7 +74,14 @@
           "secureOutput": false
         },
         "name": "run_worldbank_dataflow",
-        "dependsOn": []
+        "dependsOn": [
+          {
+            "activity": "invoke_openaq",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
       },
       {
         "type": "RefreshDataflow",
@@ -86,7 +100,14 @@
           "secureOutput": false
         },
         "name": "run_ecb_dataflow",
-        "dependsOn": []
+        "dependsOn": [
+          {
+            "activity": "invoke_openaq",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
       },
       {
         "type": "TridentNotebook",
@@ -104,13 +125,13 @@
         "name": "run_silver_economic",
         "dependsOn": [
           {
-            "activity": "run_worldbank_dataflow",
+            "activity": "run_ecb_dataflow",
             "dependencyConditions": [
               "Succeeded"
             ]
           },
           {
-            "activity": "run_ecb_dataflow",
+            "activity": "run_worldbank_dataflow",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -154,6 +175,92 @@
         "dependsOn": [
           {
             "activity": "run_silver_economic",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "-- Gold Taxi Refresh\n-- Source: Silver Lakehouse\n-- Target: Gold Warehouse\n\nSET NOCOUNT ON;\n\n-- Check duplicate keys in Gold\nIF EXISTS (\n    SELECT 1\n    FROM dbo.FactTaxiDaily\n    GROUP BY trip_date, pickup_location_id\n    HAVING COUNT(*) > 1\n)\n    THROW 50001, 'Duplicate keys in FactTaxiDaily', 1;\n\n-- Refresh daily Taxi aggregates\nMERGE dbo.FactTaxiDaily AS target\nUSING (\n    SELECT\n        trip_date,\n        pickup_location_id,\n        COUNT(*) AS total_trips,\n        SUM(total_amount) AS total_revenue_usd,\n        AVG(fare_amount) AS avg_fare_usd,\n        AVG(trip_distance) AS avg_trip_distance\n    FROM lh_nyc_taxi.dbo.silver_yellow_taxi_trips\n    WHERE trip_date IS NOT NULL\n      AND pickup_location_id IS NOT NULL\n    GROUP BY\n        trip_date,\n        pickup_location_id\n) AS source\n\nON target.trip_date = source.trip_date\nAND target.pickup_location_id = source.pickup_location_id\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.total_trips = source.total_trips,\n        target.total_revenue_usd = source.total_revenue_usd,\n        target.avg_fare_usd = source.avg_fare_usd,\n        target.avg_trip_distance = source.avg_trip_distance\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (\n        trip_date,\n        pickup_location_id,\n        total_trips,\n        total_revenue_usd,\n        avg_fare_usd,\n        avg_trip_distance\n    )\n    VALUES (\n        source.trip_date,\n        source.pickup_location_id,\n        source.total_trips,\n        source.total_revenue_usd,\n        source.avg_fare_usd,\n        source.avg_trip_distance\n    );",
+                "type": "Expression"
+              },
+              "type": "NonQuery"
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "wh_nyc_taxi_analytics",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "fcf08323-7d16-ad8a-414a-213e327690e9",
+              "endpoint": "shzyukrzx2suldqbd776rz2jha-5pcbpvjrul6edcfdrzmbfm4vay.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "refresh_gold_taxi",
+        "dependsOn": [
+          {
+            "activity": "invoke_nyc_taxi",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "-- Gold Warehouse Validation\nSET NOCOUNT ON;\n\n-- Check required tables are not empty\nIF NOT EXISTS (SELECT 1 FROM dbo.FactTaxiDaily)\n    THROW 50001, 'FactTaxiDaily is empty', 1;\n\nIF NOT EXISTS (SELECT 1 FROM dbo.FactAirQualityDaily)\n    THROW 50002, 'FactAirQualityDaily is empty', 1;\n\nIF NOT EXISTS (SELECT 1 FROM dbo.DimDate)\n    THROW 50003, 'DimDate is empty', 1;\n\nIF NOT EXISTS (SELECT 1 FROM dbo.DimZone)\n    THROW 50004, 'DimZone is empty', 1;\n\nIF NOT EXISTS (SELECT 1 FROM dbo.DimFX)\n    THROW 50005, 'DimFX is empty', 1;\n\nIF NOT EXISTS (SELECT 1 FROM dbo.DimGDP)\n    THROW 50006, 'DimGDP is empty', 1;\n\n-- Check duplicate Taxi keys\nIF EXISTS (\n    SELECT 1\n    FROM dbo.FactTaxiDaily\n    GROUP BY trip_date, pickup_location_id\n    HAVING COUNT(*) > 1\n)\n    THROW 50007, 'Duplicate keys in FactTaxiDaily', 1;\n\n-- Check duplicate FX keys\nIF EXISTS (\n    SELECT 1\n    FROM dbo.DimFX\n    GROUP BY fx_date, currency\n    HAVING COUNT(*) > 1\n)\n    THROW 50008, 'Duplicate keys in DimFX', 1;\n\n-- Check Taxi dates exist in DimDate\nIF EXISTS (\n    SELECT 1\n    FROM dbo.FactTaxiDaily AS f\n    WHERE NOT EXISTS (\n        SELECT 1\n        FROM dbo.DimDate AS d\n        WHERE d.full_date = f.trip_date\n    )\n)\n    THROW 50009, 'Taxi dates missing from DimDate', 1;",
+                "type": "Expression"
+              },
+              "type": "NonQuery"
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "wh_nyc_taxi_analytics",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "fcf08323-7d16-ad8a-414a-213e327690e9",
+              "endpoint": "shzyukrzx2suldqbd776rz2jha-5pcbpvjrul6edcfdrzmbfm4vay.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "validate_gold",
+        "dependsOn": [
+          {
+            "activity": "refresh_gold_economic",
             "dependencyConditions": [
               "Succeeded"
             ]

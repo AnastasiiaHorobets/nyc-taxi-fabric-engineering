@@ -166,7 +166,7 @@ df_taxi_clean = df_taxi.filter(
     (F.col("fare_amount") > 0) &
     (F.col("tpep_dropoff_datetime") > F.col("tpep_pickup_datetime")) &
     (F.col("tpep_pickup_datetime") >= F.lit("2025-01-01").cast("timestamp_ntz")) &
-    (F.col("tpep_pickup_datetime") < F.lit("2026-10-01").cast("timestamp_ntz"))
+    (F.col("tpep_pickup_datetime") < F.current_timestamp())
 )
 
 # METADATA ********************
