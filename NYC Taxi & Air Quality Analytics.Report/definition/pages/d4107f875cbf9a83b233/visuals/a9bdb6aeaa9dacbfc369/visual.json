@@ -2,8 +2,8 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.15.0/schema.json",
   "name": "a9bdb6aeaa9dacbfc369",
   "position": {
-    "x": 1043,
-    "y": 549,
+    "x": 1044.5091830272324,
+    "y": 548.39772007599743,
     "z": 2000,
     "height": 531,
     "width": 876,
@@ -204,6 +204,25 @@
             }
           ]
         }
+      },
+      {
+        "name": "4b9d7d35ca9c6b65d7d4",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "FactTaxiDaily"
+                  }
+                },
+                "Property": "total_trips"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
       }
     ]
   }

@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.15.0/schema.json",
   "name": "c66429a141ba69bc1ea0",
   "position": {
-    "x": 9.9037671067266313,
+    "x": 0,
     "y": 0,
     "z": 0,
-    "height": 554.61095797669134,
-    "width": 1909.4462981768943,
+    "height": 585.54216867469881,
+    "width": 1919.2771084337348,
     "tabOrder": 0
   },
   "visual": {
@@ -114,6 +114,7 @@
     "filters": [
       {
         "name": "ec56f29398cd1e18a58f",
+        "ordinal": 0,
         "field": {
           "Column": {
             "Expression": {
@@ -127,7 +128,73 @@
         "type": "Categorical"
       },
       {
+        "name": "696fad0a826e59972ba3",
+        "ordinal": 1,
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "FactTaxiDaily"
+              }
+            },
+            "Property": "Revenue EUR"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "0556341b4cae3cb1d1df",
+        "ordinal": 2,
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimDate"
+              }
+            },
+            "Property": "ShowLoadedTaxiPeriod"
+          }
+        },
+        "type": "Advanced",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "d",
+              "Entity": "DimDate",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "Comparison": {
+                  "ComparisonKind": 0,
+                  "Left": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Source": "d"
+                        }
+                      },
+                      "Property": "ShowLoadedTaxiPeriod"
+                    }
+                  },
+                  "Right": {
+                    "Literal": {
+                      "Value": "1L"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "User"
+      },
+      {
         "name": "5008331c075d7224e324",
+        "ordinal": 3,
         "field": {
           "Aggregation": {
             "Expression": {
@@ -145,6 +212,7 @@
         },
         "type": "Advanced"
       }
-    ]
+    ],
+    "filterSortOrder": "Custom"
   }
 }

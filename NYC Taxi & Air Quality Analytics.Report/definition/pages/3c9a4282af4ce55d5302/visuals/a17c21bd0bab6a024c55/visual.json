@@ -193,8 +193,58 @@
         "howCreated": "User"
       },
       {
-        "name": "81438a0d9599c528b39b",
+        "name": "00ffbd588aee96faaf9c",
         "ordinal": 2,
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimDate"
+              }
+            },
+            "Property": "ShowLoadedTaxiPeriod"
+          }
+        },
+        "type": "Advanced",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "d",
+              "Entity": "DimDate",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "Comparison": {
+                  "ComparisonKind": 0,
+                  "Left": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Source": "d"
+                        }
+                      },
+                      "Property": "ShowLoadedTaxiPeriod"
+                    }
+                  },
+                  "Right": {
+                    "Literal": {
+                      "Value": "1L"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "User"
+      },
+      {
+        "name": "81438a0d9599c528b39b",
+        "ordinal": 3,
         "field": {
           "Column": {
             "Expression": {
@@ -209,7 +259,7 @@
       },
       {
         "name": "4a7381c84125eb6d1378",
-        "ordinal": 3,
+        "ordinal": 4,
         "field": {
           "Aggregation": {
             "Expression": {

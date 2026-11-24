@@ -2,6 +2,18 @@ table DimDate
 	lineageTag: 76f4fa19-2260-4198-a8c3-eff9383cb167
 	sourceLineageTag: [dbo].[DimDate]
 
+	measure ShowLoadedTaxiPeriod =
+			
+			IF(
+			    MAX(DimDate[full_date]) <= EOMONTH(TODAY(), -2),
+			    1,
+			    0
+			)
+		formatString: 0
+		lineageTag: 205b50ec-b702-43ca-9374-d06906c522ec
+
+		changedProperty = Name
+
 	column full_date
 		dataType: dateTime
 		formatString: General Date
