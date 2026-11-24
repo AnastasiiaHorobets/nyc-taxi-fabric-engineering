@@ -144,7 +144,7 @@
           "scripts": [
             {
               "text": {
-                "value": "\n-- GOLD ECONOMIC REFRESH\n-- Source: Silver Lakehouse\n-- Target: Gold Warehouse\n\nSET NOCOUNT ON;\n\n-- Check duplicate keys in Silver\nIF EXISTS (\n    SELECT 1\n    FROM lh_nyc_taxi.dbo.silver_worldbank_gdp\n    GROUP BY country_code, year\n    HAVING COUNT(*) > 1\n)\n    THROW 50001, 'Duplicate GDP source keys', 1;\n\nIF EXISTS (\n    SELECT 1\n    FROM lh_nyc_taxi.dbo.silver_ecb_fx_rates\n    GROUP BY date, currency\n    HAVING COUNT(*) > 1\n)\n    THROW 50002, 'Duplicate FX source keys', 1;\n\n-- Check duplicate keys in Gold\nIF EXISTS (\n    SELECT 1\n    FROM dbo.DimGDP\n    GROUP BY country_code, year\n    HAVING COUNT(*) > 1\n)\n    THROW 50003, 'Duplicate GDP target keys', 1;\n\nIF EXISTS (\n    SELECT 1\n    FROM dbo.DimFX\n    GROUP BY fx_date, currency\n    HAVING COUNT(*) > 1\n)\n    THROW 50004, 'Duplicate FX target keys', 1;\n\n-- Refresh DimGDP\nMERGE dbo.DimGDP AS target\nUSING (\n    SELECT\n        country_code,\n        year,\n        gdp_usd\n    FROM lh_nyc_taxi.dbo.silver_worldbank_gdp\n    WHERE country_code IS NOT NULL\n      AND year IS NOT NULL\n) AS source\nON target.country_code = source.country_code\nAND target.year = source.year\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.gdp_usd = source.gdp_usd\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (country_code, year, gdp_usd)\n    VALUES (source.country_code, source.year, source.gdp_usd);\n\n-- Refresh DimFX\nMERGE dbo.DimFX AS target\nUSING (\n    SELECT\n        date AS fx_date,\n        currency,\n        usd_per_eur\n    FROM lh_nyc_taxi.dbo.silver_ecb_fx_rates\n    WHERE date IS NOT NULL\n      AND currency IS NOT NULL\n) AS source\nON target.fx_date = source.fx_date\nAND target.currency = source.currency\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.usd_per_eur = source.usd_per_eur\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (fx_date, currency, usd_per_eur)\n    VALUES (source.fx_date, source.currency, source.usd_per_eur);",
+                "value": " -- =====================================================\n-- GOLD ECONOMIC REFRESH\n-- Source: lh_nyc_taxi (Silver)\n-- Target: wh_nyc_taxi_analytics (Gold)\n-- Tables: DimGDP, DimFX\n-- =====================================================\n\nSET NOCOUNT ON;\n\n-- 1. Validate duplicate keys in Silver and Gold\n\nIF EXISTS (\n    SELECT 1\n    FROM lh_nyc_taxi.dbo.silver_worldbank_gdp\n    GROUP BY country_code, year\n    HAVING COUNT(*) > 1\n)\n    THROW 50001, 'Duplicate GDP source keys', 1;\n\nIF EXISTS (\n    SELECT 1\n    FROM lh_nyc_taxi.dbo.silver_ecb_fx_rates\n    GROUP BY date, currency\n    HAVING COUNT(*) > 1\n)\n    THROW 50002, 'Duplicate FX source keys', 1;\n\nIF EXISTS (\n    SELECT 1\n    FROM dbo.DimGDP\n    GROUP BY country_code, year\n    HAVING COUNT(*) > 1\n)\n    THROW 50003, 'Duplicate GDP target keys', 1;\n\nIF EXISTS (\n    SELECT 1\n    FROM dbo.DimFX\n    GROUP BY fx_date, currency\n    HAVING COUNT(*) > 1\n)\n    THROW 50004, 'Duplicate FX target keys', 1;\n\n\n-- 2. Refresh DimGDP\n\nMERGE dbo.DimGDP AS target\nUSING (\n    SELECT\n        country_code,\n        year,\n        gdp_usd\n    FROM lh_nyc_taxi.dbo.silver_worldbank_gdp\n    WHERE country_code IS NOT NULL\n      AND year IS NOT NULL\n) AS source\n\nON target.country_code = source.country_code\nAND target.year = source.year\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.gdp_usd = source.gdp_usd\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (\n        country_code,\n        year,\n        gdp_usd\n    )\n    VALUES (\n        source.country_code,\n        source.year,\n        source.gdp_usd\n    );\n\n\n-- 3. Refresh DimFX\n\nMERGE dbo.DimFX AS target\nUSING (\n    SELECT\n        date AS fx_date,\n        currency,\n        usd_per_eur\n    FROM lh_nyc_taxi.dbo.silver_ecb_fx_rates\n    WHERE date IS NOT NULL\n      AND currency IS NOT NULL\n) AS source\n\nON target.fx_date = source.fx_date\nAND target.currency = source.currency\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.usd_per_eur = source.usd_per_eur\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (\n        fx_date,\n        currency,\n        usd_per_eur\n    )\n    VALUES (\n        source.fx_date,\n        source.currency,\n        source.usd_per_eur\n    );",
                 "type": "Expression"
               },
               "type": "NonQuery"
@@ -187,7 +187,7 @@
           "scripts": [
             {
               "text": {
-                "value": "-- Gold Taxi Refresh\n-- Source: Silver Lakehouse\n-- Target: Gold Warehouse\n\nSET NOCOUNT ON;\n\n-- Check duplicate keys in Gold\nIF EXISTS (\n    SELECT 1\n    FROM dbo.FactTaxiDaily\n    GROUP BY trip_date, pickup_location_id\n    HAVING COUNT(*) > 1\n)\n    THROW 50001, 'Duplicate keys in FactTaxiDaily', 1;\n\n-- Refresh daily Taxi aggregates\nMERGE dbo.FactTaxiDaily AS target\nUSING (\n    SELECT\n        trip_date,\n        pickup_location_id,\n        COUNT(*) AS total_trips,\n        SUM(total_amount) AS total_revenue_usd,\n        AVG(fare_amount) AS avg_fare_usd,\n        AVG(trip_distance) AS avg_trip_distance\n    FROM lh_nyc_taxi.dbo.silver_yellow_taxi_trips\n    WHERE trip_date IS NOT NULL\n      AND pickup_location_id IS NOT NULL\n    GROUP BY\n        trip_date,\n        pickup_location_id\n) AS source\n\nON target.trip_date = source.trip_date\nAND target.pickup_location_id = source.pickup_location_id\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.total_trips = source.total_trips,\n        target.total_revenue_usd = source.total_revenue_usd,\n        target.avg_fare_usd = source.avg_fare_usd,\n        target.avg_trip_distance = source.avg_trip_distance\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (\n        trip_date,\n        pickup_location_id,\n        total_trips,\n        total_revenue_usd,\n        avg_fare_usd,\n        avg_trip_distance\n    )\n    VALUES (\n        source.trip_date,\n        source.pickup_location_id,\n        source.total_trips,\n        source.total_revenue_usd,\n        source.avg_fare_usd,\n        source.avg_trip_distance\n    );",
+                "value": "-- Refresh FactTaxiDaily\n-- Synchronize daily Taxi metrics from Silver to Gold.\n\nMERGE dbo.FactTaxiDaily AS target\nUSING (\n    SELECT\n        trip_date,\n        pickup_location_id,\n        COUNT(*) AS total_trips,\n        SUM(total_amount) AS total_revenue_usd,\n        AVG(fare_amount) AS avg_fare_usd,\n        AVG(trip_distance) AS avg_trip_distance\n    FROM lh_nyc_taxi.dbo.silver_yellow_taxi_trips\n    WHERE trip_date IS NOT NULL\n      AND pickup_location_id IS NOT NULL\n    GROUP BY\n        trip_date,\n        pickup_location_id\n) AS source\nON target.trip_date = source.trip_date\nAND target.pickup_location_id = source.pickup_location_id\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.total_trips = source.total_trips,\n        target.total_revenue_usd = source.total_revenue_usd,\n        target.avg_fare_usd = source.avg_fare_usd,\n        target.avg_trip_distance = source.avg_trip_distance\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (\n        trip_date,\n        pickup_location_id,\n        total_trips,\n        total_revenue_usd,\n        avg_fare_usd,\n        avg_trip_distance\n    )\n    VALUES (\n        source.trip_date,\n        source.pickup_location_id,\n        source.total_trips,\n        source.total_revenue_usd,\n        source.avg_fare_usd,\n        source.avg_trip_distance\n    );",
                 "type": "Expression"
               },
               "type": "NonQuery"
@@ -258,6 +258,49 @@
           "secureOutput": false
         },
         "name": "validate_gold",
+        "dependsOn": [
+          {
+            "activity": "refresh_gold_dimensions",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "-- 1. Refresh DimDate\n-- Add missing dates through the end of the current year + 4 years\n\nMERGE dbo.DimDate AS target\nUSING (\n    SELECT\n        DATEADD(\n            DAY,\n            value,\n            CAST('2025-01-01' AS DATE)\n        ) AS full_date\n    FROM GENERATE_SERIES(\n        0,\n        DATEDIFF(\n            DAY,\n            CAST('2025-01-01' AS DATE),\n            DATEFROMPARTS(YEAR(GETDATE()) + 4, 12, 31)\n        )\n    )\n) AS source\nON target.full_date = source.full_date\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (\n        full_date,\n        year,\n        month,\n        day\n    )\n    VALUES (\n        source.full_date,\n        YEAR(source.full_date),\n        MONTH(source.full_date),\n        DAY(source.full_date)\n    );\n\n\n-- 2. Refresh DimZone\n-- Synchronize Taxi zones from Silver to Gold\n\nMERGE dbo.DimZone AS target\nUSING (\n    SELECT\n        location_id,\n        borough,\n        zone_name,\n        service_zone\n    FROM lh_nyc_taxi.dbo.silver_taxi_zones\n    WHERE location_id IS NOT NULL\n) AS source\nON target.location_id = source.location_id\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.borough = source.borough,\n        target.zone_name = source.zone_name,\n        target.service_zone = source.service_zone\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (\n        location_id,\n        borough,\n        zone_name,\n        service_zone\n    )\n    VALUES (\n        source.location_id,\n        source.borough,\n        source.zone_name,\n        source.service_zone\n    );",
+                "type": "Expression"
+              },
+              "type": "NonQuery"
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "wh_nyc_taxi_analytics",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "fcf08323-7d16-ad8a-414a-213e327690e9",
+              "endpoint": "shzyukrzx2suldqbd776rz2jha-5pcbpvjrul6edcfdrzmbfm4vay.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "refresh_gold_dimensions",
         "dependsOn": [
           {
             "activity": "refresh_gold_economic",
