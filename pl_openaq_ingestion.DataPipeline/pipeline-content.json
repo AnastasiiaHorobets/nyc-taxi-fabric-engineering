@@ -85,7 +85,7 @@
           "scripts": [
             {
               "text": {
-                "value": "-- Refresh FactAirQualityDaily\n-- Reload the latest 14 days from Silver.\n\nMERGE dbo.FactAirQualityDaily AS target\nUSING (\n    SELECT\n        measurement_date,\n        location_id,\n        MAX(location_name) AS location_name,\n        pollutant,\n        units,\n        AVG(value) AS avg_pollution,\n        COUNT(*) AS measurement_count\n    FROM lh_nyc_taxi.dbo.silver_openaq_daily\n    WHERE measurement_date >= DATEADD(\n        DAY,\n        -13,\n        (\n            SELECT MAX(measurement_date)\n            FROM lh_nyc_taxi.dbo.silver_openaq_daily\n        )\n    )\n      AND location_id IS NOT NULL\n      AND pollutant IS NOT NULL\n      AND units IS NOT NULL\n    GROUP BY\n        measurement_date,\n        location_id,\n        pollutant,\n        units\n) AS source\nON target.measurement_date = source.measurement_date\nAND target.location_id = source.location_id\nAND target.pollutant = source.pollutant\nAND target.units = source.units\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.location_name = source.location_name,\n        target.avg_pollution = source.avg_pollution,\n        target.measurement_count = source.measurement_count\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (\n        measurement_date,\n        location_id,\n        location_name,\n        pollutant,\n        units,\n        avg_pollution,\n        measurement_count\n    )\n    VALUES (\n        source.measurement_date,\n        source.location_id,\n        source.location_name,\n        source.pollutant,\n        source.units,\n        source.avg_pollution,\n        source.measurement_count\n    );",
+                "value": "-- Refresh FactAirQualityDaily\n-- Merge the complete Silver history into Gold.\n\nMERGE dbo.FactAirQualityDaily AS target\nUSING (\n    SELECT\n        measurement_date,\n        location_id,\n        MAX(location_name) AS location_name,\n        pollutant,\n        units,\n        AVG(value) AS avg_pollution,\n        COUNT(*) AS measurement_count\n    FROM lh_nyc_taxi.dbo.silver_openaq_daily\n    WHERE measurement_date IS NOT NULL\n      AND location_id IS NOT NULL\n      AND pollutant IS NOT NULL\n      AND units IS NOT NULL\n    GROUP BY\n        measurement_date,\n        location_id,\n        pollutant,\n        units\n) AS source\nON target.measurement_date = source.measurement_date\nAND target.location_id = source.location_id\nAND target.pollutant = source.pollutant\nAND target.units = source.units\n\nWHEN MATCHED THEN\n    UPDATE SET\n        target.location_name = source.location_name,\n        target.avg_pollution = source.avg_pollution,\n        target.measurement_count = source.measurement_count\n\nWHEN NOT MATCHED BY TARGET THEN\n    INSERT (\n        measurement_date,\n        location_id,\n        location_name,\n        pollutant,\n        units,\n        avg_pollution,\n        measurement_count\n    )\n    VALUES (\n        source.measurement_date,\n        source.location_id,\n        source.location_name,\n        source.pollutant,\n        source.units,\n        source.avg_pollution,\n        source.measurement_count\n    );",
                 "type": "Expression"
               },
               "type": "NonQuery"
@@ -116,6 +116,49 @@
         "dependsOn": [
           {
             "activity": "run_silver_openaq",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "-- Validate OpenAQ freshness after refresh\n\nSET NOCOUNT ON;\n\n-- Silver must contain data\nIF NOT EXISTS (\n    SELECT 1\n    FROM lh_nyc_taxi.dbo.silver_openaq_daily\n)\n    THROW 50020, 'Silver OpenAQ is empty', 1;\n\n-- Silver data must not be older than 3 days\nIF (\n    SELECT MAX(measurement_date)\n    FROM lh_nyc_taxi.dbo.silver_openaq_daily\n) < DATEADD(DAY, -3, CAST(GETDATE() AS DATE))\n    THROW 50021, 'Silver OpenAQ data is stale', 1;\n\n-- Gold must contain data\nIF NOT EXISTS (\n    SELECT 1\n    FROM dbo.FactAirQualityDaily\n)\n    THROW 50022, 'Gold OpenAQ is empty', 1;\n\n-- Gold must include the latest Silver date\nIF (\n    SELECT MAX(measurement_date)\n    FROM dbo.FactAirQualityDaily\n) < (\n    SELECT MAX(measurement_date)\n    FROM lh_nyc_taxi.dbo.silver_openaq_daily\n)\n    THROW 50023, 'Gold OpenAQ is behind Silver', 1;",
+                "type": "Expression"
+              },
+              "type": "NonQuery"
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "wh_nyc_taxi_analytics",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "fcf08323-7d16-ad8a-414a-213e327690e9",
+              "endpoint": "shzyukrzx2suldqbd776rz2jha-5pcbpvjrul6edcfdrzmbfm4vay.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "validate_openaq_freshness",
+        "dependsOn": [
+          {
+            "activity": "refresh_gold_air_quality",
             "dependencyConditions": [
               "Succeeded"
             ]

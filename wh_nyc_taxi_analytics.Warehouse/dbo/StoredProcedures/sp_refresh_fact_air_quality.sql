@@ -8,25 +8,22 @@ BEGIN
         SELECT
             measurement_date,
             location_id,
-            location_name,
+            MAX(location_name) AS location_name,
             pollutant,
             units,
             AVG(value) AS avg_pollution,
             COUNT(*) AS measurement_count
         FROM lh_nyc_taxi.dbo.silver_openaq_daily
-        WHERE measurement_date >= DATEADD(
-            DAY, -13,
-            (SELECT MAX(measurement_date)
-             FROM lh_nyc_taxi.dbo.silver_openaq_daily)
-        )
+        WHERE measurement_date IS NOT NULL
+          AND location_id IS NOT NULL
+          AND pollutant IS NOT NULL
+          AND units IS NOT NULL
         GROUP BY
             measurement_date,
             location_id,
-            location_name,
             pollutant,
             units
     ) AS source
-
     ON target.measurement_date = source.measurement_date
        AND target.location_id = source.location_id
        AND target.pollutant = source.pollutant

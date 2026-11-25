@@ -11,8 +11,8 @@
             }
           },
           "waitOnCompletion": true,
-          "workspaceId": "00000000-0000-0000-0000-000000000000",
-          "pipelineId": "d0b41e7c-a955-a27d-4524-934ce3df7734",
+          "workspaceId": "d517c4eb-a231-41fc-88a3-8e5812b39506",
+          "pipelineId": "e3df7734-934c-4524-a27d-a955d0b41e7c",
           "operationType": "InvokeFabricPipeline"
         },
         "externalReferences": {
@@ -26,6 +26,8 @@
           "secureOutput": false
         },
         "name": "invoke_nyc_taxi",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
         "dependsOn": []
       },
       {

@@ -48,6 +48,48 @@ table FactTaxiDaily
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
+	measure 'Average Revenue per Trip USD' =
+			
+			VAR CutoffDate = EOMONTH(TODAY(), -2)
+			VAR RevenueUSD =
+			    CALCULATE(
+			        SUM(FactTaxiDaily[total_revenue_usd]),
+			        KEEPFILTERS(DimDate[full_date] <= CutoffDate)
+			    )
+			VAR TotalTrips =
+			    CALCULATE(
+			        SUM(FactTaxiDaily[total_trips]),
+			        KEEPFILTERS(DimDate[full_date] <= CutoffDate)
+			    )
+			RETURN
+			    DIVIDE(RevenueUSD, TotalTrips)
+		lineageTag: 7c56a19e-2b88-4cc1-9593-15d71d78d48c
+
+		changedProperty = Name
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Average Revenue per Trip EUR' =
+			
+			VAR CutoffDate = EOMONTH(TODAY(), -2)
+			VAR RevenueEUR =
+			    CALCULATE(
+			        [Revenue EUR],
+			        KEEPFILTERS(DimDate[full_date] <= CutoffDate)
+			    )
+			VAR TotalTrips =
+			    CALCULATE(
+			        SUM(FactTaxiDaily[total_trips]),
+			        KEEPFILTERS(DimDate[full_date] <= CutoffDate)
+			    )
+			RETURN
+			    DIVIDE(RevenueEUR, TotalTrips)
+		lineageTag: 0fffdaf9-815b-48e8-83aa-1c156479d914
+
+		changedProperty = Name
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
 	column trip_date
 		dataType: dateTime
 		formatString: General Date

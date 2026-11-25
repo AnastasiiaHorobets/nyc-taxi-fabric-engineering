@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.15.0/schema.json",
   "name": "612470b2aa8bbded3529",
   "position": {
-    "x": 0,
-    "y": 606.11054693166977,
+    "x": 17.843866171003718,
+    "y": 595.092936802974,
     "z": 1,
-    "height": 473.40006770153292,
-    "width": 1919.350065283621,
+    "height": 473.75464684014867,
+    "width": 655.76208178438662,
     "tabOrder": 1
   },
   "visual": {
@@ -96,5 +96,42 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "da906ff1e160a7c6a1aa",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimGDP"
+              }
+            },
+            "Property": "year"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "e9501727fb8f2e16f6f2",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "DimGDP"
+                  }
+                },
+                "Property": "gdp_usd"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

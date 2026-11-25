@@ -10,7 +10,10 @@ shared ecb_fx_rates = let
                 Query = [
                     format = "csvdata",
                     startPeriod = "2024-12-30",
-                    endPeriod = "2026-11-17"
+                    endPeriod = Date.ToText(
+                    Date.From(DateTimeZone.FixedUtcNow()),
+                    "yyyy-MM-dd"
+                    )
                 ]
             ]
         ),
