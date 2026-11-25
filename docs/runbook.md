@@ -16,7 +16,7 @@ Also check the following:
 `pl_nyc_taxi_ingestion` has a parameter called `p_taxi_month`.
 
 - Leave it empty for the normal run. The pipeline uses the month from two months ago.
-- Enter a month such as `2025-06` to add or replace that Bronze file.
+- Enter a month such as `2025-06` to load the file if it is missing from Bronze.
 - If the Parquet file is already in Bronze, the copy step is skipped.
 
 The Silver notebook always reads all Taxi Parquet files currently stored in Bronze and rebuilds the full Silver table. The standalone Taxi pipeline stops after Silver; it does not update `FactTaxiDaily`.
@@ -24,8 +24,9 @@ The Silver notebook always reads all Taxi Parquet files currently stored in Bron
 For a historical backfill:
 
 1. Run the Taxi pipeline once for every missing month.
-2. After all files are present, run `refresh_gold_taxi` once to merge the rebuilt Silver history into `FactTaxiDaily`.
-3. Run `validate_gold`.
+2. After all files are present, run `pl_master_orchestration`. It runs `refresh_gold_taxi` and `validate_gold` as part of the normal sequence.
+
+Before starting the master pipeline, make sure its normal target month (two months before the run date) is already in Bronze or available from TLC.
 
 ## Loading OpenAQ
 
