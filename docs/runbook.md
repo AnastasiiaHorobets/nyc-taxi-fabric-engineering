@@ -16,10 +16,16 @@ Also check the following:
 `pl_nyc_taxi_ingestion` has a parameter called `p_taxi_month`.
 
 - Leave it empty for the normal run. The pipeline uses the month from two months ago.
-- Enter a month such as `2025-06` to load or reprocess a specific month.
+- Enter a month such as `2025-06` to add or replace that Bronze file.
 - If the Parquet file is already in Bronze, the copy step is skipped.
 
-For a historical backfill, run the pipeline once for every required month.
+The Silver notebook always reads all Taxi Parquet files currently stored in Bronze and rebuilds the full Silver table. The standalone Taxi pipeline stops after Silver; it does not update `FactTaxiDaily`.
+
+For a historical backfill:
+
+1. Run the Taxi pipeline once for every missing month.
+2. After all files are present, run `refresh_gold_taxi` once to merge the rebuilt Silver history into `FactTaxiDaily`.
+3. Run `validate_gold`.
 
 ## Loading OpenAQ
 
@@ -112,7 +118,7 @@ ECB does not publish a rate on every weekend or holiday. Compare the latest Bron
 
 - All four pages open without errors.
 - Taxi charts stop at the expected loaded month.
-- Air-quality visuals use Average for `avg_pollution` and the correct pollutant/unit filters.
+- Air-quality visuals use Average for `avg_pollution`. The current data uses PM2.5 in `µg/m³` and NO₂ in `ppm`.
 - Both average revenue per trip cards have values.
 - The USD/EUR chart uses the expected dates.
 

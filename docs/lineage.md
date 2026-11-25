@@ -16,7 +16,9 @@ flowchart TB
     subgraph Bronze[Lakehouse Bronze]
         TB[Files/bronze/yellow_taxi]
         ZB[Files/bronze/reference/taxi_zone_lookup.csv]
-        OAB[bronze_openaq_locations]
+        OAL[bronze_openaq_locations]
+        OASEN[openaq_sensors]
+        OAM[openaq_daily_measurements]
         WBB[bronze_worldbank_gdp]
         ECBB[bronze_ecb_fx_rates]
     end
@@ -48,10 +50,16 @@ flowchart TB
 
     TLC --> TB --> TS --> FT
     ZONE --> ZB --> ZS --> DZ
-    KV --> OA --> OAB --> OAS --> FA
+    KV --> OA
+    OA --> OAL
+    OA --> OASEN
+    OA --> OAM
+    OAL --> OAS
+    OASEN --> OAS
+    OAM --> OAS --> FA
     WB --> WBB --> WBS --> DGDP
     ECB --> ECBB --> ECBS --> DFX
-    TS --> DD
+    DATEGEN[Warehouse GENERATE_SERIES] --> DD
 
     FT --> SM
     FA --> SM
@@ -75,7 +83,7 @@ The Taxi pipeline derives a default `p_taxi_month` equal to the month two months
 
 ### OpenAQ
 
-`pl_master_orchestration` or daily schedule → `pl_openaq_ingestion` → Key Vault `openaq-api-key` → `df_openaq_ingestion` → `bronze_openaq_locations` → `nb_silver_openaq` → `silver_openaq_daily` → full-history Gold `MERGE` → `FactAirQualityDaily` → `validate_openaq_freshness`.
+`pl_master_orchestration` or daily schedule → `pl_openaq_ingestion` → Key Vault `openaq-api-key` → `df_openaq_ingestion` → `bronze_openaq_locations`, `openaq_sensors`, and `openaq_daily_measurements` → `nb_silver_openaq` → `silver_openaq_daily` → full-history Gold `MERGE` → `FactAirQualityDaily` → `validate_openaq_freshness`.
 
 ### Economy
 
@@ -83,7 +91,7 @@ The Taxi pipeline derives a default `p_taxi_month` equal to the month two months
 
 ### Dimensions and validation
 
-After the economic refresh, `nb_reference_zones` loads `silver_taxi_zones`. `refresh_gold_dimensions` then updates `DimDate` and `DimZone`, followed by `validate_gold`.
+After the economic refresh, `nb_reference_zones` loads `silver_taxi_zones`. `refresh_gold_dimensions` generates `DimDate` independently with `GENERATE_SERIES` and updates `DimZone` from `silver_taxi_zones`. It is followed by `validate_gold`.
 
 ## Gold validation lineage
 

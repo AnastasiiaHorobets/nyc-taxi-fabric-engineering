@@ -19,10 +19,12 @@ If the key is changed, the Key Vault secret should be updated without changing t
 
 ## Data quality rules
 
-- Taxi records with invalid dates, IDs, amounts, distances or durations are removed.
+- Silver Taxi removes rows with non-positive `fare_amount` or `trip_distance`, invalid pickup/drop-off order, pickup dates before `2025-01-01`, and future pickup dates.
 - Duplicate Taxi rows are removed in Silver.
+- Gold Taxi excludes rows where `trip_date` or `pickup_location_id` is null.
 - OpenAQ rows with missing values or negative measurements are removed.
 - Pollutant units are kept in the Air Quality fact key so different units are not mixed.
+- The verified units are `µg/m³` for PM2.5 and `ppm` for NO₂ and O₃. The current report does not need a separate unit filter because each displayed pollutant has one unit in the loaded data.
 - Pipeline validation checks empty tables, duplicate keys, date coverage and OpenAQ freshness.
 
 ## Refresh policy

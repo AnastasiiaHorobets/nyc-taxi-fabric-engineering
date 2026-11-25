@@ -4,10 +4,10 @@ This is my final Microsoft Fabric data engineering project. It combines NYC Yell
 
 I used a Bronze/Silver/Gold structure:
 
-- Bronze keeps the source files and API results
-- Silver contains cleaned Delta tables
-- Gold is a star schema in Fabric Warehouse
-- Power BI reads the Warehouse through a Direct Lake semantic model
+- Bronze keeps the source files and API results.
+- Silver contains cleaned Delta tables.
+- Gold is a star schema in Fabric Warehouse.
+- Power BI reads the Warehouse through a Direct Lake semantic model.
 
 ## Questions covered by the project
 
@@ -26,7 +26,7 @@ The Taxi and OpenAQ data can be compared by date. OpenAQ stations are not the sa
 |---|---|---|
 | NYC Yellow Taxi trips | [NYC TLC Trip Records](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) | Monthly Parquet files in `Files/bronze/yellow_taxi/` |
 | Taxi zones | [NYC TLC zone lookup](https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv) | `Files/bronze/reference/taxi_zone_lookup.csv` |
-| Air quality | [OpenAQ API](https://docs.openaq.org/) | `bronze_openaq_locations` |
+| Air quality | [OpenAQ API](https://docs.openaq.org/) | `bronze_openaq_locations`, `openaq_sensors`, `openaq_daily_measurements` |
 | USA GDP | [World Bank API](https://api.worldbank.org/v2/country/USA/indicator/NY.GDP.MKTP.CD?format=json) | `bronze_worldbank_gdp` |
 | USD/EUR rate | [ECB Data API](https://data-api.ecb.europa.eu/service/data/EXR/D.USD.EUR.SP00.A?format=csvdata) | `bronze_ecb_fx_rates` |
 
@@ -111,7 +111,8 @@ Full run instructions and SQL checks are in [docs/runbook.md](docs/runbook.md).
 
 ## Data checks
 
-- Taxi rows with invalid dates, identifiers, amounts or distances are removed.
+- Taxi rows with invalid dates, non-positive fare or non-positive distance are removed in Silver.
+- Rows without `trip_date` or `pickup_location_id` are excluded when Gold is built.
 - Duplicate Taxi rows are removed in Silver.
 - Invalid and negative OpenAQ values are removed.
 - Gold tables are updated with `MERGE` statements.

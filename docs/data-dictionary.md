@@ -5,7 +5,9 @@
 | Layer | Object | Grain / purpose |
 |---|---|---|
 | Bronze | `Files/bronze/yellow_taxi/*.parquet` | Raw monthly Yellow Taxi files |
-| Bronze | `bronze_openaq_locations` | Raw OpenAQ locations, sensors, parameters, and measurements |
+| Bronze | `bronze_openaq_locations` | OpenAQ monitoring-location details |
+| Bronze | `openaq_sensors` | OpenAQ sensor-to-location, pollutant, and unit mapping |
+| Bronze | `openaq_daily_measurements` | Daily measurements returned for the selected sensors |
 | Bronze | `bronze_worldbank_gdp` | Raw annual USA GDP observations |
 | Bronze | `bronze_ecb_fx_rates` | Raw daily USD/EUR observations |
 | Bronze | `Files/bronze/reference/taxi_zone_lookup.csv` | NYC Taxi Zone reference file |

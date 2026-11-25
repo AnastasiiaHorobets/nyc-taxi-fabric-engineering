@@ -4,7 +4,7 @@ These are the main conclusions from the report. The values were checked on 2026-
 
 ## Taxi trips and air quality
 
-Daily Taxi trips have a clear weekly pattern. PM2.5 and NO2 have more irregular peaks. Some pollution peaks happen on busy Taxi days, but the chart does not show a stable relationship for the whole period. It is therefore better to describe this as a date-based comparison, not proof that Taxi trips caused the pollution.
+Daily Taxi trips have a clear weekly pattern. PM2.5 and NO₂ have more irregular peaks. The combined chart compares Taxi trips with PM2.5 on the same date axis; NO₂ is shown separately on the Air Quality page. Some pollution peaks happen on busy Taxi days, but the chart does not show a stable relationship for the whole period. It is therefore better to describe this as a date-based comparison, not proof that Taxi trips caused the pollution.
 
 ## Zones and locations
 
@@ -14,7 +14,9 @@ The two location types are different. OpenAQ stations were not mapped to TLC Tax
 
 ## Revenue per trip
 
-The report showed:
+The cards use all available Taxi fact rows from `2025-01-01` through `2026-09-30`. There were no additional page or visual filters. The upper date is calculated by the measures with `EOMONTH(TODAY(), -2)`.
+
+For this period, the report showed:
 
 - Average revenue per trip in USD: **29.56**
 - Average revenue per trip in EUR: **25.84**
